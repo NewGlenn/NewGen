@@ -154,20 +154,19 @@
 
   /* ----------------------------------------------------------- stats right */
   .stats-panel{ text-align:left; }
-  .bars{ display:flex; flex-direction:column; gap:11px; }
-  .bar-row .bar-meta{
-    display:flex; justify-content:space-between; font-size:10px;
-    letter-spacing:1px; color:var(--text-dim); margin-bottom:4px;
+  .prio-list{ display:flex; flex-direction:column; gap:9px; }
+  .prio-row{
+    display:flex; flex-direction:column; gap:2px;
+    border-left:2px solid var(--cyan-dim2); padding-left:8px;
   }
-  .bar-meta b{ color:var(--cyan-soft); font-weight:400; }
-  .bar-track{
-    height:5px; background:rgba(109,243,255,.08); border-radius:3px; overflow:hidden;
+  .prio-row.urgent{ border-left-color:var(--amber-dim); }
+  .prio-acct{
+    font-family:var(--font-head); font-size:8px; letter-spacing:2px;
+    color:var(--cyan-soft);
   }
-  .bar-fill{
-    height:100%; width:0; border-radius:3px;
-    background:linear-gradient(90deg, rgba(109,243,255,.35), var(--cyan));
-    box-shadow:0 0 8px var(--cyan-dim), 0 0 2px var(--cyan);
-    transition:width 1.4s cubic-bezier(.2,.8,.2,1);
+  .prio-row.urgent .prio-acct{ color:var(--amber); }
+  .prio-label{
+    font-size:10px; letter-spacing:.3px; color:var(--text-dim); line-height:1.35;
   }
 
   .accounts-panel{ margin-top:16px; padding-top:10px; border-top:1px solid var(--cyan-dim3); }
@@ -312,8 +311,8 @@
       <div class="log-list" id="logList"></div>
     </div>
     <div class="panel stats-panel">
-      <div class="panel-label">TASK PIPELINE</div>
-      <div class="bars" id="bars"></div>
+      <div class="panel-label">TOMORROW · TUE 15 SEP</div>
+      <div class="prio-list" id="prioList"></div>
       <div class="accounts-panel" id="accountsPanel"></div>
     </div>
   </div>
@@ -370,21 +369,17 @@
     });
   })();
 
-  // Task pipeline bars
-  var STAGES = (DATA.workload && DATA.workload.stages) || [];
-  (function renderBars(){
-    var wrap = document.getElementById('bars');
-    var max = Math.max.apply(null, STAGES.map(function(s){ return s.value; })) || 1;
-    STAGES.forEach(function(s){
+  // Tomorrow's priorities — one action pulled from each account
+  (function renderPriorities(){
+    var wrap = document.getElementById('prioList');
+    if (!wrap) return;
+    (DATA.priorities || []).forEach(function(p){
       var row = document.createElement('div');
-      row.className = 'bar-row';
+      row.className = 'prio-row' + (p.urgent ? ' urgent' : '');
       row.innerHTML =
-        '<div class="bar-meta"><span>' + s.label + '</span><b>' + fmtNum(s.value) + '</b></div>' +
-        '<div class="bar-track"><div class="bar-fill"></div></div>';
+        '<span class="prio-acct">' + (p.account || '').toUpperCase() + (p.urgent ? ' ★' : '') + '</span>' +
+        '<span class="prio-label">' + p.label + '</span>';
       wrap.appendChild(row);
-      var fill = row.querySelector('.bar-fill');
-      var pct = Math.max(4, (s.value / max) * 100);
-      requestAnimationFrame(function(){ fill.style.width = pct + '%'; });
     });
   })();
 
@@ -480,9 +475,6 @@
       if (c.status !== 'online') {
         lines.push({ text: 'WARNING: ' + c.name.toUpperCase() + ' LINK DOWN — RETRYING' });
       }
-    });
-    STAGES.forEach(function(s){
-      lines.push({ text: 'PIPELINE — ' + s.label.toUpperCase() + ': ' + fmtNum(s.value) });
     });
     (DATA.accounts || []).forEach(function(a){
       lines.push({ text: 'ACCOUNT — ' + a.name.toUpperCase() + ' · ' + a.status.toUpperCase() + (a.focus ? ' · ' + a.focus.toUpperCase() : '') });

@@ -154,20 +154,19 @@
 
   /* ----------------------------------------------------------- stats right */
   .stats-panel{ text-align:left; }
-  .bars{ display:flex; flex-direction:column; gap:11px; }
-  .bar-row .bar-meta{
-    display:flex; justify-content:space-between; font-size:10px;
-    letter-spacing:1px; color:var(--text-dim); margin-bottom:4px;
+  .prio-list{ display:flex; flex-direction:column; gap:9px; }
+  .prio-row{
+    display:flex; flex-direction:column; gap:2px;
+    border-left:2px solid var(--cyan-dim2); padding-left:8px;
   }
-  .bar-meta b{ color:var(--cyan-soft); font-weight:400; }
-  .bar-track{
-    height:5px; background:rgba(109,243,255,.08); border-radius:3px; overflow:hidden;
+  .prio-row.urgent{ border-left-color:var(--amber-dim); }
+  .prio-acct{
+    font-family:var(--font-head); font-size:8px; letter-spacing:2px;
+    color:var(--cyan-soft);
   }
-  .bar-fill{
-    height:100%; width:0; border-radius:3px;
-    background:linear-gradient(90deg, rgba(109,243,255,.35), var(--cyan));
-    box-shadow:0 0 8px var(--cyan-dim), 0 0 2px var(--cyan);
-    transition:width 1.4s cubic-bezier(.2,.8,.2,1);
+  .prio-row.urgent .prio-acct{ color:var(--amber); }
+  .prio-label{
+    font-size:10px; letter-spacing:.3px; color:var(--text-dim); line-height:1.35;
   }
 
   .accounts-panel{ margin-top:16px; padding-top:10px; border-top:1px solid var(--cyan-dim3); }
@@ -312,8 +311,8 @@
       <div class="log-list" id="logList"></div>
     </div>
     <div class="panel stats-panel">
-      <div class="panel-label">TASK PIPELINE</div>
-      <div class="bars" id="bars"></div>
+      <div class="panel-label">TOMORROW · TUE 15 SEP</div>
+      <div class="prio-list" id="prioList"></div>
       <div class="accounts-panel" id="accountsPanel"></div>
     </div>
   </div>
@@ -362,16 +361,6 @@ window.JARVIS_DATA = {
     { name: "Google Drive",     status: "online" },
   ],
 
-  // Right-hand panel: task pipeline by status (illustrative weekly snapshot)
-  workload: {
-    stages: [
-      { label: "To Do",       value: 12 },
-      { label: "In Progress", value: 7  },
-      { label: "In Review",   value: 5  },
-      { label: "Done · 7d",   value: 23 },
-    ],
-  },
-
   // The accounts you work on. status: "On Track" | "Active" | "At Risk" | "Blocked"
   // focus = a short read of the current workstream from the Slack channel.
   accounts: [
@@ -383,44 +372,51 @@ window.JARVIS_DATA = {
     { name: "Courvoisier",     status: "On Track", focus: "reel approved" },
   ],
 
-  // Priorities feed the log, the flag chip and "handle first" — most urgent
-  // first. Mark the single most time-critical item with urgent:true.
+  // Tomorrow's actions — one pulled from each account's Slack channel.
+  // Feeds the log, flag chip and "handle first"; most urgent first.
+  // Mark the single most time-critical item with urgent:true.
   priorities: [
     {
-      label: "Lock Hilary Duff O2 event logistics",
-      detail: "Venue location, media wall, emcee & Q&A still open — event is tomorrow",
-      due: "Tomorrow · Tue 15 Sep",
+      label: "Deliver the Hilary Duff O2 event",
+      detail: "Lock venue location, media-wall delivery & timing; confirm emcee + pre-approved Q&A; call sheet out; tickets transferred",
+      due: "Tue 15 Sep",
       account: "Aperol",
       urgent: true,
     },
     {
       label: "Build Yoto France Q4 creator list",
-      detail: "~25 names by Weds, full-quarter list to client Thursday EOD",
-      due: "Wed–Thu",
+      detail: "PM list-build session — ~25 names, overindex on micros; add more Weds, vet Thurs, to client Thu EOD",
+      due: "Tue 15 Sep",
       account: "Yoto France",
     },
     {
-      label: "Finalise Curaleaf September concepts",
-      detail: "Pick 3 influencer concepts + Tamzin / Stevie creators",
-      due: "This week",
+      label: "Lock Curaleaf September concepts",
+      detail: "Confirm 3 influencer concepts + Tamzin / Stevie adhoc; brief Maddy with creators, past work & learnings",
+      due: "Tue 15 Sep",
       account: "Curaleaf Clinic",
     },
     {
-      label: "Review Sarti Mason & Lewis content",
-      detail: "Serve-order errors to resolve; decision due on cutting Lewis",
-      due: "This week",
+      label: "Resubmit Yoto UK Disney amends",
+      detail: "allthatspretty & alexandremiwren amends for Disney approval; send September net-new creator rates",
+      due: "Tue 15 Sep",
+      account: "Yoto UK",
+    },
+    {
+      label: "Progress Sarti content & gifting",
+      detail: "Finalise Mason/Lewis versions for Campari; chase Lewis stories (cut if window closed); chase gifting addresses + analytics",
+      due: "Tue 15 Sep",
       account: "Sarti",
     },
     {
-      label: "Action Yoto UK Disney amends",
-      detail: "allthatspretty resubmission before Disney approval",
-      due: "This week",
-      account: "Yoto UK",
+      label: "Close out Courvoisier Café Royal reel",
+      detail: "Confirm Georgia's amends (typo, responsible-drinking wording, #EnjoyResponsibly, stronger cocktail photo); await client sign-off",
+      due: "Tue 15 Sep",
+      account: "Courvoisier",
     },
   ],
 
   // Operational focus banner across the bottom of the HUD
-  headline: "FOCUS — HILARY DUFF O2 TOMORROW · YOTO FRANCE Q4 LIST BY THU · CURALEAF SEPT CONCEPTS",
+  headline: "TOMORROW · TUE 15 SEP — SIX ACCOUNT ACTIONS QUEUED · HILARY DUFF O2 IS THE PRIORITY",
 
   // J.A.R.V.I.S.'s sign-off, folded into the ticker and the brief
   closer: "Six accounts live, Glenn. I'll keep watch.",
@@ -460,21 +456,17 @@ window.JARVIS_DATA = {
     });
   })();
 
-  // Task pipeline bars
-  var STAGES = (DATA.workload && DATA.workload.stages) || [];
-  (function renderBars(){
-    var wrap = document.getElementById('bars');
-    var max = Math.max.apply(null, STAGES.map(function(s){ return s.value; })) || 1;
-    STAGES.forEach(function(s){
+  // Tomorrow's priorities — one action pulled from each account
+  (function renderPriorities(){
+    var wrap = document.getElementById('prioList');
+    if (!wrap) return;
+    (DATA.priorities || []).forEach(function(p){
       var row = document.createElement('div');
-      row.className = 'bar-row';
+      row.className = 'prio-row' + (p.urgent ? ' urgent' : '');
       row.innerHTML =
-        '<div class="bar-meta"><span>' + s.label + '</span><b>' + fmtNum(s.value) + '</b></div>' +
-        '<div class="bar-track"><div class="bar-fill"></div></div>';
+        '<span class="prio-acct">' + (p.account || '').toUpperCase() + (p.urgent ? ' ★' : '') + '</span>' +
+        '<span class="prio-label">' + p.label + '</span>';
       wrap.appendChild(row);
-      var fill = row.querySelector('.bar-fill');
-      var pct = Math.max(4, (s.value / max) * 100);
-      requestAnimationFrame(function(){ fill.style.width = pct + '%'; });
     });
   })();
 
@@ -570,9 +562,6 @@ window.JARVIS_DATA = {
       if (c.status !== 'online') {
         lines.push({ text: 'WARNING: ' + c.name.toUpperCase() + ' LINK DOWN — RETRYING' });
       }
-    });
-    STAGES.forEach(function(s){
-      lines.push({ text: 'PIPELINE — ' + s.label.toUpperCase() + ': ' + fmtNum(s.value) });
     });
     (DATA.accounts || []).forEach(function(a){
       lines.push({ text: 'ACCOUNT — ' + a.name.toUpperCase() + ' · ' + a.status.toUpperCase() + (a.focus ? ' · ' + a.focus.toUpperCase() : '') });
