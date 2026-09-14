@@ -20,6 +20,8 @@
     --green:#4dffa0;
     --amber:#ffb238;
     --amber-dim:rgba(255,178,56,.5);
+    --red:#ff5c6a;
+    --red-dim:rgba(255,92,106,.5);
     --text-hi:#e9fbff;
     --text-dim:rgba(179,226,236,.62);
     --text-faint:rgba(150,200,215,.36);
@@ -168,14 +170,25 @@
     transition:width 1.4s cubic-bezier(.2,.8,.2,1);
   }
 
-  .sponsor-ledger{ margin-top:16px; padding-top:10px; border-top:1px solid var(--cyan-dim3); }
-  .sponsor-row{
-    display:flex; justify-content:space-between; font-size:10px;
-    letter-spacing:.6px; color:var(--text-dim); padding:3px 0;
+  .accounts-panel{ margin-top:16px; padding-top:10px; border-top:1px solid var(--cyan-dim3); }
+  .account-row{
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+    font-size:10px; letter-spacing:.6px; color:var(--text-dim); padding:4px 0;
   }
-  .sponsor-row .tier-Platinum{ color:var(--cyan-soft); text-shadow:0 0 6px var(--cyan-dim2); }
-  .sponsor-row .tier-Gold{ color:var(--amber); }
-  .sponsor-row .tier-Silver{ color:var(--text-dim); }
+  .account-row .acct-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .account-row .acct-tasks{ color:var(--text-faint); font-variant-numeric:tabular-nums; }
+  .account-row .acct-status{
+    display:inline-flex; align-items:center; gap:5px; letter-spacing:1px;
+    text-transform:uppercase; font-size:8.5px;
+  }
+  .acct-status::before{
+    content:''; width:6px; height:6px; border-radius:50%;
+    background:currentColor; box-shadow:0 0 6px currentColor;
+  }
+  .acct-status.st-ontrack{ color:var(--green); }
+  .acct-status.st-active{ color:var(--cyan-soft); }
+  .acct-status.st-atrisk{ color:var(--amber); }
+  .acct-status.st-blocked{ color:var(--red); }
 
   /* -------------------------------------------------------------- bottom */
   .hud-bottom{ display:flex; flex-direction:column; gap:12px; pointer-events:auto; }
@@ -199,7 +212,7 @@
     margin-top:2px; font-size:9.5px; letter-spacing:2.5px; color:var(--text-faint);
   }
 
-  .payment-chip{
+  .flag-chip{
     align-self:center;
     display:flex; align-items:center; gap:8px;
     padding:7px 16px; border-radius:999px;
@@ -299,16 +312,16 @@
       <div class="log-list" id="logList"></div>
     </div>
     <div class="panel stats-panel">
-      <div class="panel-label">CONTENT FUNNEL</div>
+      <div class="panel-label">TASK PIPELINE</div>
       <div class="bars" id="bars"></div>
-      <div class="sponsor-ledger" id="sponsorLedger"></div>
+      <div class="accounts-panel" id="accountsPanel"></div>
     </div>
   </div>
 
   <div class="hud-bottom">
     <div class="headline-banner" id="headline"></div>
     <div class="figures-row" id="figures"></div>
-    <div class="payment-chip" id="paymentChip" hidden></div>
+    <div class="flag-chip" id="flagChip" hidden></div>
     <div class="bottom-bar">
       <button class="hud-btn" id="briefBtn">BRIEF ME</button>
       <div class="ticker-wrap"><div class="ticker" id="ticker"></div></div>
@@ -327,77 +340,78 @@
 /**
  * jarvis_data.js
  * ---------------------------------------------------------------------------
- * Single source of data for dashboard.html. Nothing in the dashboard's markup
- * or script is hard-coded content — every string and number rendered in the
- * HUD is read from window.JARVIS_DATA at load time. Edit this file to change
- * what J.A.R.V.I.S. reports; the dashboard itself never needs to change.
+ * Single source of data for dashboard.html — the J.A.R.V.I.S. command center
+ * retooled for NewGen operations. Everything the HUD renders is read from
+ * window.JARVIS_DATA at load time; edit this file to change what J.A.R.V.I.S.
+ * reports. In production these values would be populated from ClickUp,
+ * Calendar, Gmail and Slack — the figures below are illustrative examples.
  * ---------------------------------------------------------------------------
  */
 window.JARVIS_DATA = {
   // Top-left header
   greeting: "GOOD EVENING, GLENN",
-  generated: "SYSTEM SYNC — SEP 14 2026 · 06:12 PDT",
+  generated: "WORKSPACE SYNC — SEP 14 2026 · 18:32 BST",
 
   // Top-right connector status list. status: "online" | "offline"
   connectors: [
     { name: "Gmail",            status: "online"  },
+    { name: "Slack",            status: "online"  },
     { name: "Google Calendar",  status: "online"  },
-    { name: "Google Drive",     status: "online"  },
     { name: "ClickUp",          status: "online"  },
-    { name: "Stripe",           status: "offline" },
-    { name: "YouTube Studio",   status: "offline" },
+    { name: "Google Drive",     status: "online"  },
   ],
 
-  // Right-hand stats panel: thin glowing funnel bars
-  content: {
-    funnel: [
-      { label: "Subscribers", value: 84200 },
-      { label: "Leads",       value: 1380  },
-      { label: "Qualified",   value: 412   },
-      { label: "Customers",   value: 96    },
+  // Right-hand panel: task pipeline by status (thin glowing bars)
+  workload: {
+    stages: [
+      { label: "To Do",       value: 9  },
+      { label: "In Progress", value: 6  },
+      { label: "In Review",   value: 4  },
+      { label: "Done · 7d",   value: 18 },
     ],
   },
 
-  // Sponsor ledger, shown under the funnel bars and woven into the ticker
-  sponsors: [
-    { name: "Aurora Optics",  tier: "Platinum", amount: 18000 },
-    { name: "Solace Audio",   tier: "Gold",     amount: 9500  },
-    { name: "Vantage Gear",   tier: "Gold",     amount: 8000  },
-    { name: "Nimbus Cloud",   tier: "Silver",   amount: 4200  },
+  // Accounts you work on, shown under the pipeline and woven into the ticker.
+  // status: "On Track" | "Active" | "At Risk" | "Blocked"
+  accounts: [
+    { name: "Atlas Rebrand",     status: "On Track", tasks: 6 },
+    { name: "Meridian Launch",   status: "Active",   tasks: 5 },
+    { name: "Northwind Studios", status: "At Risk",  tasks: 4 },
+    { name: "Vantage Media",     status: "On Track", tasks: 3 },
+    { name: "Harbour & Co",      status: "Blocked",  tasks: 2 },
   ],
 
-  // Streaming activity log + "what should I handle first" both draw on this.
-  // One entry may carry kind:"payment" — it drives the amber payment-due chip.
+  // Priorities feed the streaming log, the flag chip and "handle first".
+  // Mark the single most urgent item with overdue:true to drive the amber chip.
   priorities: [
     {
-      label: "Approve Q3 sponsor contract — Aurora Optics",
-      detail: "Legal redlines returned, needs signature",
-      due: "Today 5:00 PM",
+      label: "Finalise Atlas rebrand master deck",
+      detail: "Client review call at 2:00 PM",
+      due: "Today 11:00",
     },
     {
-      label: "Record response to community AMA",
-      detail: "42 unanswered questions queued",
+      label: "Approve Northwind edit v3",
+      detail: "Sitting in the review queue 2 days",
+      due: "Yesterday",
+      overdue: true,
+    },
+    {
+      label: "Send Meridian launch timeline",
+      detail: "Team is blocked awaiting your sign-off",
       due: "Tomorrow",
     },
     {
-      label: "Pay studio lease invoice",
-      detail: "Net-15 terms, auto-pay disabled",
-      due: "Sep 16",
-      kind: "payment",
-      amount: 4250,
-    },
-    {
-      label: "Review analytics dip on Tuesday upload",
-      detail: "Retention down 8% at the 2:10 mark",
+      label: "Unblock Harbour asset delivery",
+      detail: "Waiting on legal clearance to ship",
       due: "This week",
     },
   ],
 
-  // Big banner figure across the bottom of the HUD
-  headline: "MTD REVENUE $128,460 — 14% AHEAD OF FORECAST",
+  // Operational focus banner across the bottom of the HUD
+  headline: "FOCUS TODAY — SHIP THE ATLAS DECK BY 2PM · CLEAR THE REVIEW QUEUE · UNBLOCK HARBOUR",
 
-  // J.A.R.V.I.S.'s sign-off line, folded into the ticker and the brief
-  closer: "Standing by whenever you need me, Glenn.",
+  // J.A.R.V.I.S.'s sign-off, folded into the ticker and the brief
+  closer: "Your queue is under control, Glenn. I'll keep watch.",
 };
 </script>
 <script>
@@ -410,8 +424,8 @@ window.JARVIS_DATA = {
     if (typeof n !== 'number') return n;
     return n.toLocaleString('en-US');
   }
-  function fmtMoney(n){ return '$' + fmtNum(n); }
   function pad2(n){ return n < 10 ? '0'+n : ''+n; }
+  function statusClass(s){ return 'st-' + String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
 
   /* =================================================== static HUD fill */
   document.getElementById('greeting').textContent = DATA.greeting || '';
@@ -434,89 +448,94 @@ window.JARVIS_DATA = {
     });
   })();
 
-  // Funnel bars
+  // Task pipeline bars
+  var STAGES = (DATA.workload && DATA.workload.stages) || [];
   (function renderBars(){
     var wrap = document.getElementById('bars');
-    var funnel = (DATA.content && DATA.content.funnel) || [];
-    var max = Math.max.apply(null, funnel.map(function(f){ return f.value; })) || 1;
-    funnel.forEach(function(f){
+    var max = Math.max.apply(null, STAGES.map(function(s){ return s.value; })) || 1;
+    STAGES.forEach(function(s){
       var row = document.createElement('div');
       row.className = 'bar-row';
       row.innerHTML =
-        '<div class="bar-meta"><span>' + f.label + '</span><b>' + fmtNum(f.value) + '</b></div>' +
+        '<div class="bar-meta"><span>' + s.label + '</span><b>' + fmtNum(s.value) + '</b></div>' +
         '<div class="bar-track"><div class="bar-fill"></div></div>';
       wrap.appendChild(row);
       var fill = row.querySelector('.bar-fill');
-      var pct = Math.max(4, (f.value / max) * 100);
+      var pct = Math.max(4, (s.value / max) * 100);
       requestAnimationFrame(function(){ fill.style.width = pct + '%'; });
     });
   })();
 
-  // Sponsor ledger
-  (function renderSponsors(){
-    var wrap = document.getElementById('sponsorLedger');
-    var sponsors = DATA.sponsors || [];
-    if (!sponsors.length) return;
+  // Accounts panel
+  (function renderAccounts(){
+    var wrap = document.getElementById('accountsPanel');
+    var accounts = DATA.accounts || [];
+    if (!accounts.length) return;
     var label = document.createElement('div');
     label.className = 'panel-label';
     label.style.marginBottom = '8px';
-    label.textContent = 'SPONSOR LEDGER';
+    label.textContent = 'ACCOUNTS';
     wrap.appendChild(label);
-    sponsors.forEach(function(s){
+    accounts.forEach(function(a){
       var row = document.createElement('div');
-      row.className = 'sponsor-row';
+      row.className = 'account-row';
       row.innerHTML =
-        '<span>' + s.name + '</span>' +
-        '<span class="tier-' + s.tier + '">' + fmtMoney(s.amount) + '</span>';
+        '<span class="acct-name">' + a.name + '</span>' +
+        '<span class="acct-tasks">' + a.tasks + ' tasks</span>' +
+        '<span class="acct-status ' + statusClass(a.status) + '">' + a.status + '</span>';
       wrap.appendChild(row);
     });
   })();
 
-  // Big bottom figures, derived from the funnel
+  // Big bottom figures, derived from the task pipeline, accounts and priorities
   (function renderFigures(){
     var wrap = document.getElementById('figures');
-    var funnel = (DATA.content && DATA.content.funnel) || [];
-    if (!funnel.length) return;
-    var first = funnel[0], last = funnel[funnel.length - 1];
-    var conv = first.value ? ((last.value / first.value) * 100) : 0;
+    var byLabel = {};
+    STAGES.forEach(function(s){ byLabel[s.label.toLowerCase()] = s.value; });
+    var open = STAGES.reduce(function(sum, s){
+      return /done/i.test(s.label) ? sum : sum + s.value;
+    }, 0);
+    var priorities = DATA.priorities || [];
+    var dueToday = priorities.filter(function(p){
+      return /today/i.test(p.due) || p.overdue;
+    }).length;
     var figs = [
-      { label: first.label.toUpperCase(), value: fmtNum(first.value) },
-      { label: last.label.toUpperCase(), value: fmtNum(last.value) },
-      { label: 'CONVERSION', value: conv.toFixed(2) + '%' },
-      { label: 'ACTIVE SPONSORS', value: (DATA.sponsors || []).length },
+      { label: 'OPEN TASKS',  value: open },
+      { label: 'DUE TODAY',   value: dueToday },
+      { label: 'IN REVIEW',   value: byLabel['in review'] || 0 },
+      { label: 'ACCOUNTS',    value: (DATA.accounts || []).length },
     ];
     figs.forEach(function(f){
       var el = document.createElement('div');
       el.className = 'figure';
-      el.innerHTML = '<div class="fig-value">' + f.value + '</div><div class="fig-label">' + f.label + '</div>';
+      el.innerHTML = '<div class="fig-value">' + fmtNum(f.value) + '</div><div class="fig-label">' + f.label + '</div>';
       wrap.appendChild(el);
     });
   })();
 
-  // Amber payment-due chip
-  (function renderPaymentChip(){
-    var chip = document.getElementById('paymentChip');
+  // Amber flag chip — surfaces the most urgent overdue priority
+  (function renderFlagChip(){
+    var chip = document.getElementById('flagChip');
     var priorities = DATA.priorities || [];
-    var payment = priorities.find(function(p){ return p.kind === 'payment'; });
-    if (!payment) return;
+    var flagged = priorities.find(function(p){ return p.overdue; });
+    if (!flagged) return;
     chip.hidden = false;
-    chip.textContent = '⚠ PAYMENT DUE — ' + payment.label + ' · ' +
-      fmtMoney(payment.amount) + ' · DUE ' + payment.due.toUpperCase();
+    chip.textContent = '⚠ OVERDUE — ' + flagged.label + ' · DUE ' + flagged.due.toUpperCase();
   })();
 
   // Ticker
   (function renderTicker(){
     var el = document.getElementById('ticker');
     var parts = [];
-    (DATA.sponsors || []).forEach(function(s){
-      parts.push(s.name + ' (' + s.tier + ') ' + fmtMoney(s.amount));
+    (DATA.accounts || []).forEach(function(a){
+      parts.push(a.name + ' — ' + a.status.toUpperCase() + ' (' + a.tasks + ' tasks)');
     });
     if (DATA.headline) parts.push(DATA.headline);
     (DATA.priorities || []).forEach(function(p){
       parts.push(p.label + ' — DUE ' + p.due.toUpperCase());
     });
     if (DATA.closer) parts.push(DATA.closer);
-    var joined = parts.map(function(p){ return p; }).join('   •   ');
+    var joined = parts.join('   •   ');
     // duplicate for seamless marquee loop
     el.innerHTML = '<span>●</span>' + joined + '   ' +
       '<span>●</span>' + joined + '   ';
@@ -538,20 +557,20 @@ window.JARVIS_DATA = {
     var list = document.getElementById('logList');
     var lines = [];
 
-    lines.push({ text: 'SYSTEM ONLINE — CORE CONNECTORS NOMINAL' });
+    lines.push({ text: 'SYSTEM ONLINE — ALL CONNECTORS NOMINAL' });
     (DATA.connectors || []).forEach(function(c){
       if (c.status !== 'online') {
         lines.push({ text: 'WARNING: ' + c.name.toUpperCase() + ' LINK DOWN — RETRYING' });
       }
     });
-    (DATA.content && DATA.content.funnel || []).forEach(function(f){
-      lines.push({ text: 'FUNNEL SNAPSHOT — ' + f.label.toUpperCase() + ': ' + fmtNum(f.value) });
+    STAGES.forEach(function(s){
+      lines.push({ text: 'PIPELINE — ' + s.label.toUpperCase() + ': ' + fmtNum(s.value) });
     });
-    (DATA.sponsors || []).forEach(function(s){
-      lines.push({ text: 'SPONSOR LEDGER — ' + s.name.toUpperCase() + ' · ' + s.tier.toUpperCase() + ' · ' + fmtMoney(s.amount) });
+    (DATA.accounts || []).forEach(function(a){
+      lines.push({ text: 'ACCOUNT — ' + a.name.toUpperCase() + ' · ' + a.status.toUpperCase() + ' · ' + a.tasks + ' TASKS' });
     });
     (DATA.priorities || []).forEach(function(p){
-      lines.push({ text: 'PRIORITY QUEUED — ' + p.label.toUpperCase() + ' (DUE ' + p.due.toUpperCase() + ')' });
+      lines.push({ text: (p.overdue ? 'OVERDUE — ' : 'PRIORITY QUEUED — ') + p.label.toUpperCase() + ' (DUE ' + p.due.toUpperCase() + ')' });
     });
     if (DATA.headline) lines.push({ text: DATA.headline });
     if (DATA.closer) lines.push({ text: DATA.closer.toUpperCase() });

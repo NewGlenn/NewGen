@@ -1,75 +1,76 @@
 /**
  * jarvis_data.js
  * ---------------------------------------------------------------------------
- * Single source of data for dashboard.html. Nothing in the dashboard's markup
- * or script is hard-coded content — every string and number rendered in the
- * HUD is read from window.JARVIS_DATA at load time. Edit this file to change
- * what J.A.R.V.I.S. reports; the dashboard itself never needs to change.
+ * Single source of data for dashboard.html — the J.A.R.V.I.S. command center
+ * retooled for NewGen operations. Everything the HUD renders is read from
+ * window.JARVIS_DATA at load time; edit this file to change what J.A.R.V.I.S.
+ * reports. In production these values would be populated from ClickUp,
+ * Calendar, Gmail and Slack — the figures below are illustrative examples.
  * ---------------------------------------------------------------------------
  */
 window.JARVIS_DATA = {
   // Top-left header
   greeting: "GOOD EVENING, GLENN",
-  generated: "SYSTEM SYNC — SEP 14 2026 · 06:12 PDT",
+  generated: "WORKSPACE SYNC — SEP 14 2026 · 18:32 BST",
 
   // Top-right connector status list. status: "online" | "offline"
   connectors: [
     { name: "Gmail",            status: "online"  },
+    { name: "Slack",            status: "online"  },
     { name: "Google Calendar",  status: "online"  },
-    { name: "Google Drive",     status: "online"  },
     { name: "ClickUp",          status: "online"  },
-    { name: "Stripe",           status: "offline" },
-    { name: "YouTube Studio",   status: "offline" },
+    { name: "Google Drive",     status: "online"  },
   ],
 
-  // Right-hand stats panel: thin glowing funnel bars
-  content: {
-    funnel: [
-      { label: "Subscribers", value: 84200 },
-      { label: "Leads",       value: 1380  },
-      { label: "Qualified",   value: 412   },
-      { label: "Customers",   value: 96    },
+  // Right-hand panel: task pipeline by status (thin glowing bars)
+  workload: {
+    stages: [
+      { label: "To Do",       value: 9  },
+      { label: "In Progress", value: 6  },
+      { label: "In Review",   value: 4  },
+      { label: "Done · 7d",   value: 18 },
     ],
   },
 
-  // Sponsor ledger, shown under the funnel bars and woven into the ticker
-  sponsors: [
-    { name: "Aurora Optics",  tier: "Platinum", amount: 18000 },
-    { name: "Solace Audio",   tier: "Gold",     amount: 9500  },
-    { name: "Vantage Gear",   tier: "Gold",     amount: 8000  },
-    { name: "Nimbus Cloud",   tier: "Silver",   amount: 4200  },
+  // Accounts you work on, shown under the pipeline and woven into the ticker.
+  // status: "On Track" | "Active" | "At Risk" | "Blocked"
+  accounts: [
+    { name: "Atlas Rebrand",     status: "On Track", tasks: 6 },
+    { name: "Meridian Launch",   status: "Active",   tasks: 5 },
+    { name: "Northwind Studios", status: "At Risk",  tasks: 4 },
+    { name: "Vantage Media",     status: "On Track", tasks: 3 },
+    { name: "Harbour & Co",      status: "Blocked",  tasks: 2 },
   ],
 
-  // Streaming activity log + "what should I handle first" both draw on this.
-  // One entry may carry kind:"payment" — it drives the amber payment-due chip.
+  // Priorities feed the streaming log, the flag chip and "handle first".
+  // Mark the single most urgent item with overdue:true to drive the amber chip.
   priorities: [
     {
-      label: "Approve Q3 sponsor contract — Aurora Optics",
-      detail: "Legal redlines returned, needs signature",
-      due: "Today 5:00 PM",
+      label: "Finalise Atlas rebrand master deck",
+      detail: "Client review call at 2:00 PM",
+      due: "Today 11:00",
     },
     {
-      label: "Record response to community AMA",
-      detail: "42 unanswered questions queued",
+      label: "Approve Northwind edit v3",
+      detail: "Sitting in the review queue 2 days",
+      due: "Yesterday",
+      overdue: true,
+    },
+    {
+      label: "Send Meridian launch timeline",
+      detail: "Team is blocked awaiting your sign-off",
       due: "Tomorrow",
     },
     {
-      label: "Pay studio lease invoice",
-      detail: "Net-15 terms, auto-pay disabled",
-      due: "Sep 16",
-      kind: "payment",
-      amount: 4250,
-    },
-    {
-      label: "Review analytics dip on Tuesday upload",
-      detail: "Retention down 8% at the 2:10 mark",
+      label: "Unblock Harbour asset delivery",
+      detail: "Waiting on legal clearance to ship",
       due: "This week",
     },
   ],
 
-  // Big banner figure across the bottom of the HUD
-  headline: "MTD REVENUE $128,460 — 14% AHEAD OF FORECAST",
+  // Operational focus banner across the bottom of the HUD
+  headline: "FOCUS TODAY — SHIP THE ATLAS DECK BY 2PM · CLEAR THE REVIEW QUEUE · UNBLOCK HARBOUR",
 
-  // J.A.R.V.I.S.'s sign-off line, folded into the ticker and the brief
-  closer: "Standing by whenever you need me, Glenn.",
+  // J.A.R.V.I.S.'s sign-off, folded into the ticker and the brief
+  closer: "Your queue is under control, Glenn. I'll keep watch.",
 };
