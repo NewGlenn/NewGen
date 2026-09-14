@@ -876,13 +876,47 @@ window.JARVIS_DATA = {
   requestAnimationFrame(frame);
 
   /* ======================================================================
-   *  BRIEF ME — plays jarvis_brief.mp3 when available, and drives the
-   *  sphere's speaking pulse from a synthetic envelope regardless (so the
-   *  effect still works with no audio file / no network / offline).
+   *  BRIEF ME — speaks the brief out loud using the browser's built-in
+   *  speech synthesis (Web Speech API). Works offline, needs no audio file.
+   *  If a real jarvis_brief.mp3 is supplied it is preferred; otherwise the
+   *  page reads the live brief aloud. The sphere pulses to a synthetic
+   *  envelope while speaking either way.
    * ==================================================================== */
   var briefBtn = document.getElementById('briefBtn');
   var briefAudio = document.getElementById('briefAudio');
-  var FALLBACK_SPEAK_MS = 7500;
+  var synth = window.speechSynthesis || null;
+  var currentUtterance = null;
+
+  // Warm up the voice list (some browsers populate it asynchronously)
+  var cachedVoices = [];
+  function loadVoices(){ if (synth) cachedVoices = synth.getVoices() || []; }
+  loadVoices();
+  if (synth && typeof synth.addEventListener === 'function') {
+    synth.addEventListener('voiceschanged', loadVoices);
+  }
+  function pickVoice(){
+    var v = cachedVoices.length ? cachedVoices : (synth ? synth.getVoices() : []);
+    return v.find(function(x){ return /en[-_]GB/i.test(x.lang); }) ||
+           v.find(function(x){ return /^en[-_]/i.test(x.lang); }) ||
+           v[0] || null;
+  }
+
+  // Build the spoken brief from the live data
+  function buildBriefText(){
+    var d = window.JARVIS_DATA || {};
+    var parts = [];
+    parts.push('Good evening, Glenn. Here is your brief.');
+    var prios = d.priorities || [];
+    if (prios.length) {
+      var p0 = prios[0];
+      parts.push('Your top priority is ' + (p0.account || '') + '. ' + p0.label + '.');
+      for (var i = 1; i < prios.length; i++) {
+        parts.push('Next. ' + (prios[i].account || '') + '. ' + prios[i].label + '.');
+      }
+    }
+    parts.push("That's " + (prios.length || 'several') + " account actions queued. I'll keep watch.");
+    return parts.join(' ');
+  }
 
   function startSpeaking(){
     speaking = true;
@@ -900,31 +934,63 @@ window.JARVIS_DATA = {
   }
 
   briefAudio.addEventListener('ended', stopSpeaking);
-  briefAudio.addEventListener('error', function(){ /* handled by fallback timer below */ });
+
+  function speakWithTTS(){
+    var text = buildBriefText();
+    try {
+      synth.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      var voice = pickVoice();
+      if (voice) u.voice = voice;
+      u.lang = (voice && voice.lang) || 'en-GB';
+      u.rate = 0.98; u.pitch = 1.0; u.volume = 1.0;
+      u.onend = stopSpeaking;
+      u.onerror = stopSpeaking;
+      currentUtterance = u;
+      synth.speak(u);
+      // Safety net: if onend never fires, stop after a length-based estimate
+      var estMs = Math.min(90000, Math.max(6000, text.split(/\s+/).length * 420));
+      if (briefTimeout) clearTimeout(briefTimeout);
+      briefTimeout = setTimeout(function(){ if (!synth.speaking) stopSpeaking(); }, estMs);
+      return true;
+    } catch (e) { return false; }
+  }
 
   briefBtn.addEventListener('click', function(){
-    if (speaking) return; // already talking
+    // Click while speaking = stop
+    if (speaking) {
+      try { if (synth) synth.cancel(); } catch (e) {}
+      try { briefAudio.pause(); } catch (e) {}
+      stopSpeaking();
+      return;
+    }
+
     startSpeaking();
 
-    var usedRealAudio = false;
+    // Speak the brief aloud via the Web Speech API — called synchronously
+    // inside the click so the user gesture is preserved (Safari requires this).
+    if (synth && speakWithTTS()) return;
+
+    // No speech synthesis available — try a supplied jarvis_brief.mp3, else
+    // just run the visual pulse for a few seconds.
     try {
       briefAudio.currentTime = 0;
       var playPromise = briefAudio.play();
       if (playPromise && typeof playPromise.then === 'function') {
-        playPromise.then(function(){
-          usedRealAudio = true;
-        }).catch(function(){
-          // no file / autoplay blocked / offline — synthetic envelope still runs
-        });
+        playPromise.then(function(){ /* real file playing */ }).catch(fallbackTimer);
+      } else {
+        fallbackTimer();
       }
-    } catch (e) { /* ignore, fallback timer covers it */ }
-
-    if (briefTimeout) clearTimeout(briefTimeout);
-    briefTimeout = setTimeout(function(){
-      // only auto-stop from the fallback timer if real audio isn't driving 'ended'
-      if (briefAudio.paused || briefAudio.error || !usedRealAudio) stopSpeaking();
-    }, FALLBACK_SPEAK_MS);
+    } catch (e) {
+      fallbackTimer();
+    }
   });
+
+  // Last-resort visual-only pulse if neither audio nor TTS is available
+  function fallbackTimer(){
+    if (briefTimeout) clearTimeout(briefTimeout);
+    briefTimeout = setTimeout(stopSpeaking, 7500);
+  }
 
 })();
 </script>
