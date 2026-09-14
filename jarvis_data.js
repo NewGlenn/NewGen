@@ -1,76 +1,88 @@
 /**
  * jarvis_data.js
  * ---------------------------------------------------------------------------
- * Single source of data for dashboard.html — the J.A.R.V.I.S. command center
- * retooled for NewGen operations. Everything the HUD renders is read from
- * window.JARVIS_DATA at load time; edit this file to change what J.A.R.V.I.S.
- * reports. In production these values would be populated from ClickUp,
- * Calendar, Gmail and Slack — the figures below are illustrative examples.
+ * Data source for dashboard.html — J.A.R.V.I.S. command center for NewGen.
+ * Accounts, statuses and priorities below were grounded in the live Slack
+ * #account-* channels on 14 Sep 2026. Statuses are a read of recent channel
+ * activity — adjust any of them here and the HUD updates on reload.
+ * (Pipeline counts remain an illustrative weekly snapshot until wired to
+ * ClickUp.)
  * ---------------------------------------------------------------------------
  */
 window.JARVIS_DATA = {
   // Top-left header
   greeting: "GOOD EVENING, GLENN",
-  generated: "WORKSPACE SYNC — SEP 14 2026 · 18:32 BST",
+  generated: "WORKSPACE SYNC — SEP 14 2026 · 20:05 BST",
 
   // Top-right connector status list. status: "online" | "offline"
   connectors: [
-    { name: "Gmail",            status: "online"  },
-    { name: "Slack",            status: "online"  },
-    { name: "Google Calendar",  status: "online"  },
-    { name: "ClickUp",          status: "online"  },
-    { name: "Google Drive",     status: "online"  },
+    { name: "Gmail",            status: "online" },
+    { name: "Slack",            status: "online" },
+    { name: "Google Calendar",  status: "online" },
+    { name: "ClickUp",          status: "online" },
+    { name: "Google Drive",     status: "online" },
   ],
 
-  // Right-hand panel: task pipeline by status (thin glowing bars)
+  // Right-hand panel: task pipeline by status (illustrative weekly snapshot)
   workload: {
     stages: [
-      { label: "To Do",       value: 9  },
-      { label: "In Progress", value: 6  },
-      { label: "In Review",   value: 4  },
-      { label: "Done · 7d",   value: 18 },
+      { label: "To Do",       value: 12 },
+      { label: "In Progress", value: 7  },
+      { label: "In Review",   value: 5  },
+      { label: "Done · 7d",   value: 23 },
     ],
   },
 
-  // Accounts you work on, shown under the pipeline and woven into the ticker.
-  // status: "On Track" | "Active" | "At Risk" | "Blocked"
+  // The accounts you work on. status: "On Track" | "Active" | "At Risk" | "Blocked"
+  // focus = a short read of the current workstream from the Slack channel.
   accounts: [
-    { name: "Atlas Rebrand",     status: "On Track", tasks: 6 },
-    { name: "Meridian Launch",   status: "Active",   tasks: 5 },
-    { name: "Northwind Studios", status: "At Risk",  tasks: 4 },
-    { name: "Vantage Media",     status: "On Track", tasks: 3 },
-    { name: "Harbour & Co",      status: "Blocked",  tasks: 2 },
+    { name: "Aperol",          status: "At Risk",  focus: "Hilary Duff O2" },
+    { name: "Sarti",           status: "At Risk",  focus: "content review" },
+    { name: "Yoto France",     status: "Active",   focus: "Q4 list build" },
+    { name: "Curaleaf Clinic", status: "Active",   focus: "Sept concepts" },
+    { name: "Yoto UK",         status: "On Track", focus: "Sept delivery" },
+    { name: "Courvoisier",     status: "On Track", focus: "reel approved" },
   ],
 
-  // Priorities feed the streaming log, the flag chip and "handle first".
-  // Mark the single most urgent item with overdue:true to drive the amber chip.
+  // Priorities feed the log, the flag chip and "handle first" — most urgent
+  // first. Mark the single most time-critical item with urgent:true.
   priorities: [
     {
-      label: "Finalise Atlas rebrand master deck",
-      detail: "Client review call at 2:00 PM",
-      due: "Today 11:00",
+      label: "Lock Hilary Duff O2 event logistics",
+      detail: "Venue location, media wall, emcee & Q&A still open — event is tomorrow",
+      due: "Tomorrow · Tue 15 Sep",
+      account: "Aperol",
+      urgent: true,
     },
     {
-      label: "Approve Northwind edit v3",
-      detail: "Sitting in the review queue 2 days",
-      due: "Yesterday",
-      overdue: true,
+      label: "Build Yoto France Q4 creator list",
+      detail: "~25 names by Weds, full-quarter list to client Thursday EOD",
+      due: "Wed–Thu",
+      account: "Yoto France",
     },
     {
-      label: "Send Meridian launch timeline",
-      detail: "Team is blocked awaiting your sign-off",
-      due: "Tomorrow",
-    },
-    {
-      label: "Unblock Harbour asset delivery",
-      detail: "Waiting on legal clearance to ship",
+      label: "Finalise Curaleaf September concepts",
+      detail: "Pick 3 influencer concepts + Tamzin / Stevie creators",
       due: "This week",
+      account: "Curaleaf Clinic",
+    },
+    {
+      label: "Review Sarti Mason & Lewis content",
+      detail: "Serve-order errors to resolve; decision due on cutting Lewis",
+      due: "This week",
+      account: "Sarti",
+    },
+    {
+      label: "Action Yoto UK Disney amends",
+      detail: "allthatspretty resubmission before Disney approval",
+      due: "This week",
+      account: "Yoto UK",
     },
   ],
 
   // Operational focus banner across the bottom of the HUD
-  headline: "FOCUS TODAY — SHIP THE ATLAS DECK BY 2PM · CLEAR THE REVIEW QUEUE · UNBLOCK HARBOUR",
+  headline: "FOCUS — HILARY DUFF O2 TOMORROW · YOTO FRANCE Q4 LIST BY THU · CURALEAF SEPT CONCEPTS",
 
   // J.A.R.V.I.S.'s sign-off, folded into the ticker and the brief
-  closer: "Your queue is under control, Glenn. I'll keep watch.",
+  closer: "Six accounts live, Glenn. I'll keep watch.",
 };
